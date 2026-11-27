@@ -1,0 +1,80 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- main
+- dev
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: 'Release'
+  solution: 'Flippit.sln'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'Restore NuGet Packages'
+  inputs:
+    command: 'restore'
+    projects: '$(solution)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build Solution'
+  inputs:
+    command: 'build'
+    projects: '$(solution)'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run All Tests (Excluding End-to-End Tests)'
+  inputs:
+    command: 'test'
+    projects: |
+      **/*Tests/*.csproj
+      !**/*EndToEndTests/*.csproj
+    arguments: '--configuration $(buildConfiguration) --collect "Code coverage" --logger trx'
+    publishTestResults: true
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish API App'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: 'src/Api/Flippit.Api.App/Flippit.Api.App.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api'
+    zipAfterPublish: true
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Web App'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: 'src/Web/Flippit.Web.App/Flippit.Web.App.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/web'
+    zipAfterPublish: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Upload Artifacts'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
+- task: AzureWebApp@1
+  displayName: 'Deploy API to Azure'
+  inputs:
+    azureSubscription: '54b0cc23-fbca-45f5-8f3c-be547cc05be7'
+    appType: 'webApp'
+    appName: 'flippit-api'
+    package: '$(Build.ArtifactStagingDirectory)/api/**/*.zip'
+
+- task: AzureWebApp@1
+  displayName: 'Deploy Web App to Azure'
+  inputs:
+    azureSubscription: '54b0cc23-fbca-45f5-8f3c-be547cc05be7'
+    appType: 'webApp'
+    appName: 'app-iw5-2025-team-xjanigd00-web'
+    package: '$(Build.ArtifactStagingDirectory)/web/**/*.zip'
