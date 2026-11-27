@@ -1,14 +1,7 @@
-# Overview
+## Overview
 Flash card application.
 
-# How to use
-1. Clone this repository
-```bash
-git clone https://dev.azure.com/iw5-2025-team-xjanigd00/project/_git/project
-```
-2. TODO
-
-# Folder structure
+## Folder structure
 ```txt
 Flippit.sln
 README.md
@@ -27,3 +20,8 @@ src/
 │   ├── Flippit.Common.BL/                  # Shared business logic
 │   ├── Flippit.Common.Models/              # Shared data models
 ```
+## Screenshots
+
+![main](screenshots/main.png)
+![collection](screenshots/collection.png)
+![card](screenshots/card.png)
